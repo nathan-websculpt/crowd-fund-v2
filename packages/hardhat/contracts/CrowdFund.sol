@@ -193,6 +193,14 @@ contract CrowdFund {
 
 		emit DonationHappened(fundRun.owner, msg.sender, amount);
 	}
+	
+	function donateToFundRuntwo(
+	)
+		public
+		payable
+	{
+		require(msg.value == 0, "nope");
+	}
 
 	function fundRunOwnerWithdraw(
 		uint16 _id
@@ -318,5 +326,10 @@ contract CrowdFund {
 		FundRun storage fundRun = fundRuns[_id];
 		require(block.timestamp < fundRun.deadline, "It's ovaaaa");
 		return fundRun.deadline - block.timestamp;
+	}
+
+	function willFail(uint16 _aa, uint16 _bb) public pure returns(uint256) {
+		require(_aa < _bb, "nope");
+		return _aa + _bb;
 	}
 }

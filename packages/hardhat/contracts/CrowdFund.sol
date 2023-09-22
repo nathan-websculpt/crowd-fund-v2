@@ -43,11 +43,11 @@ contract CrowdFund is Ownable {
 
 	mapping(uint256 => FundRun) public fundRuns;
 	mapping(address => DonorsLog) public donorLogs; //a single donor will have all of their logs (across all Fund Runs they donated to) here
-    uint16 public crowdFundCommission = 25; //.25% //todo:constant? private?
-    uint16 public crowdFundDenominator = 10000; 
+	uint16 public crowdFundCommission = 25; //.25% //todo:constant? private?
+	uint16 public crowdFundDenominator = 10000;
 	uint16 public numberOfFundRuns = 0;
 	uint256 public commissionPayout = 0; //todo: private
-	uint256 public totalProfitsTaken = 0; 
+	uint256 public totalProfitsTaken = 0;
 	address[] public fundRunOwners;
 
 	event FundRunCreated(
@@ -57,7 +57,7 @@ contract CrowdFund is Ownable {
 		uint256 target
 	);
 
-	event DonationHappened(address owner, address donor, uint256 amount);
+	event DonationHappened(address owner, address donor, uint256 amount); //todo: rename to Donation
 
 	event OwnerWithdrawal(address owner, uint256 amount);
 
@@ -120,9 +120,9 @@ contract CrowdFund is Ownable {
 		}
 	}
 
-    constructor(address _contractOwner) {
+	constructor(address _contractOwner) {
 		_transferOwnership(_contractOwner);
-    }
+	}
 
 	function createFundRun(
 		string memory _title,
@@ -239,18 +239,16 @@ contract CrowdFund is Ownable {
 			"This Fund Run is hereby prevented from being over-drawn."
 		);
 
-
 		//contract takes its cut
-		uint256 fundsMinusCommission = grossWithdrawAmount * crowdFundCommission / crowdFundDenominator; //0.25%
+		uint256 fundsMinusCommission = (grossWithdrawAmount *
+			crowdFundCommission) / crowdFundDenominator; //0.25%
 		uint256 netWithdrawAmount = grossWithdrawAmount - fundsMinusCommission;
 
 		fundRun.amountWithdrawn = fundRun.amountWithdrawn + netWithdrawAmount;
 
 		//update profit amount
 		commissionPayout = commissionPayout + fundsMinusCommission;
-		//todo: add a liftime profit var, commissionPayout gets 0'ed out 
 
-		
 		if (fundRun.isActive) fundRun.isActive = false;
 
 		(bool success, ) = payable(msg.sender).call{ value: netWithdrawAmount }(
@@ -304,20 +302,19 @@ contract CrowdFund is Ownable {
 	/**
 	 * @dev  (OnlyOwner can) Withdraw the profits this contract has made
 	 */
-	function contractOwnerWithdraw() public onlyOwner() {
+	function contractOwnerWithdraw() public onlyOwner {
 		require(commissionPayout > 0, "Nothing to withdraw");
 
 		uint256 amountToWithdraw = commissionPayout;
 		commissionPayout = 0;
 		totalProfitsTaken = totalProfitsTaken + amountToWithdraw;
-		
+
 		(bool success, ) = payable(msg.sender).call{ value: amountToWithdraw }(
 			""
 		);
 
 		require(success, "Withdrawal reverted.");
-		if (success)
-			emit contractOwnerWithdrawal(msg.sender, amountToWithdraw);
+		if (success) emit contractOwnerWithdrawal(msg.sender, amountToWithdraw);
 	}
 
 	/**

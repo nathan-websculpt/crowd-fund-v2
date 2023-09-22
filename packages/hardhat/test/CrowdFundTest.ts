@@ -77,9 +77,15 @@ describe("CrowdFund", function () {
     this.timeout(125000); //2-minute timeout, Fund Runs have 1-minute deadlines
 
     it("Should deploy CrowdFund", async function () {
+      const [owner] = await ethers.getSigners();
       const crowdFundFactory = await ethers.getContractFactory("CrowdFund");
-      crowdFund = (await crowdFundFactory.deploy()) as CrowdFund;
+      crowdFund = (await crowdFundFactory.deploy(owner.address)) as CrowdFund;
       console.log("deployed CrowdFund at address: ", crowdFund.address);
+    });
+
+    it("Contract Owner transferred successfully upon deployment...", async function () {
+      const [owner] = await ethers.getSigners();
+      await expect(await crowdFund.owner()).to.equal(owner.address);
     });
 
     describe("Making test Fund Runs (this may take a moment) ...", function () {
@@ -138,6 +144,7 @@ describe("CrowdFund", function () {
       });
 
       describe("Waiting for Fund Runs to end ... ", function () {
+        //TODO: fails until you account for the missing 0.25%
         it("Should allow for Alice to do an 'Owner Withdrawal' because her Fund was successful", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
@@ -159,6 +166,7 @@ describe("CrowdFund", function () {
           expect(alicesFundRun.amountWithdrawn).to.equal(expectedAmount);
         });
 
+        //TODO: fails until you account for the missing 0.25%
         it("Should allow for Bob to do a 'Donor Withdrawal' from John's Fund Run", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
@@ -179,6 +187,7 @@ describe("CrowdFund", function () {
           expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("1"));
         });
 
+        //TODO: fails until you account for the missing 0.25%
         it("Should allow for Alice to do a 'Donor Withdrawal' from John's Fund Run", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
@@ -198,8 +207,8 @@ describe("CrowdFund", function () {
           expect(johnsFundRun.amountCollected).to.equal(parseEther("2"));
           expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("2"));
 
-          //at this point the contract balance should be 0;
-          expect(contractBalance).to.equal(0);
+          //at this point the contract balance should be 0; ....old
+          expect(contractBalance).to.equal(0); //TODO: fails until you account for the missing 0.25%
         });
 
         it("Should see that Bob's Fund Run has no donors/donations", async function () {

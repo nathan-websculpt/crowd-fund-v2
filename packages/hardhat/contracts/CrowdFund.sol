@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+
 /**
  * @dev NOT PRODUCTION-READY ... FOR LEARNING PURPOSES ONLY
  * CrowdFund.sol is a barebones POC of a multi-user "Crowd Fund Creator"
@@ -14,7 +16,7 @@ pragma solidity >=0.8.0 <0.9.0;
  * 		- only owner(s) can clean up de-activated/emptied Fund Runs ... or at least move them into an Archived state
  * 		- multi-sig functionality (thinking multi-sig Fund Runs is a cool end-goal for this project)
  */
-contract CrowdFund {
+contract CrowdFund is Ownable {
 	struct FundRun {
 		uint16 id; //not large enough in a prod scenario
 		address owner;
@@ -41,7 +43,11 @@ contract CrowdFund {
 
 	mapping(uint256 => FundRun) public fundRuns;
 	mapping(address => DonorsLog) public donorLogs; //a single donor will have all of their logs (across all Fund Runs they donated to) here
+    uint16 public crowdFundCommission = 25; //.25% //todo:constant? private?
+    uint16 public crowdFundDenominator = 10000; 
 	uint16 public numberOfFundRuns = 0;
+	uint256 public commissionPayout = 0; //todo: private
+	uint256 public totalProfitsTaken = 0; 
 	address[] public fundRunOwners;
 
 	event FundRunCreated(
@@ -56,6 +62,8 @@ contract CrowdFund {
 	event OwnerWithdrawal(address owner, uint256 amount);
 
 	event DonorWithdrawal(address owner, address donor, uint256 amount);
+
+	event contractOwnerWithdrawal(address contractOwner, uint256 amount);
 
 	modifier ownsThisFundRun(
 		uint16 id,
@@ -111,6 +119,10 @@ contract CrowdFund {
 			_;
 		}
 	}
+
+    constructor(address _contractOwner) {
+		_transferOwnership(_contractOwner);
+    }
 
 	function createFundRun(
 		string memory _title,
@@ -207,10 +219,10 @@ contract CrowdFund {
 			fundRun.amountCollected > fundRun.amountWithdrawn,
 			"This Fund Run is empty -- a withdrawal may have already occurred."
 		);
-		uint256 amountToWithdraw = fundRun.amountCollected -
+		uint256 grossWithdrawAmount = fundRun.amountCollected -
 			fundRun.amountWithdrawn;
 		require(
-			amountToWithdraw > 0,
+			grossWithdrawAmount > 0,
 			"There is nothing to withdraw -- a withdrawal may have already occurred."
 		);
 
@@ -222,20 +234,31 @@ contract CrowdFund {
 		 * and ensure they are going to be less-than/equal-to the Fund Run's total balance ("amountCollected")
 		 */
 		require(
-			(amountToWithdraw + fundRun.amountWithdrawn) <=
+			(grossWithdrawAmount + fundRun.amountWithdrawn) <=
 				fundRun.amountCollected,
 			"This Fund Run is hereby prevented from being over-drawn."
 		);
 
-		fundRun.amountWithdrawn = fundRun.amountWithdrawn + amountToWithdraw;
+
+		//contract takes its cut
+		uint256 fundsMinusCommission = grossWithdrawAmount * crowdFundCommission / crowdFundDenominator; //0.25%
+		uint256 netWithdrawAmount = grossWithdrawAmount - fundsMinusCommission;
+
+		fundRun.amountWithdrawn = fundRun.amountWithdrawn + netWithdrawAmount;
+
+		//update profit amount
+		commissionPayout = commissionPayout + fundsMinusCommission;
+		//todo: add a liftime profit var, commissionPayout gets 0'ed out 
+
+		
 		if (fundRun.isActive) fundRun.isActive = false;
 
-		(bool success, ) = payable(msg.sender).call{ value: amountToWithdraw }(
+		(bool success, ) = payable(msg.sender).call{ value: netWithdrawAmount }(
 			""
 		);
 
 		require(success, "Withdrawal reverted.");
-		if (success) emit OwnerWithdrawal(fundRun.owner, amountToWithdraw);
+		if (success) emit OwnerWithdrawal(fundRun.owner, netWithdrawAmount);
 		//TODO: Handle else. Not done yet, because how this works will change
 	}
 
@@ -279,6 +302,25 @@ contract CrowdFund {
 	}
 
 	/**
+	 * @dev  (OnlyOwner can) Withdraw the profits this contract has made
+	 */
+	function contractOwnerWithdraw() public onlyOwner() {
+		require(commissionPayout > 0, "Nothing to withdraw");
+
+		uint256 amountToWithdraw = commissionPayout;
+		commissionPayout = 0;
+		totalProfitsTaken = totalProfitsTaken + amountToWithdraw;
+		
+		(bool success, ) = payable(msg.sender).call{ value: amountToWithdraw }(
+			""
+		);
+
+		require(success, "Withdrawal reverted.");
+		if (success)
+			emit contractOwnerWithdrawal(msg.sender, amountToWithdraw);
+	}
+
+	/**
 	 * @dev Returns donor and donation arrays, for a Fund Run
 	 */
 	function getDonors(
@@ -305,17 +347,17 @@ contract CrowdFund {
 		return fundRun;
 	}
 
+	function timeLeft(uint16 _id) public view returns (uint256) {
+		FundRun storage fundRun = fundRuns[_id];
+		require(block.timestamp < fundRun.deadline, "It's ovaaaa");
+		return fundRun.deadline - block.timestamp;
+	}
+
 	function getBalance()
 		public
 		view
 		returns (uint256 crowdFund_contractBalance)
 	{
 		return address(this).balance;
-	}
-
-	function timeLeft(uint16 _id) public view returns (uint256) {
-		FundRun storage fundRun = fundRuns[_id];
-		require(block.timestamp < fundRun.deadline, "It's ovaaaa");
-		return fundRun.deadline - block.timestamp;
 	}
 }

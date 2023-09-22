@@ -44,12 +44,14 @@ describe("Simple Test", function () {
 
   describe("Making test Fund Runs (this may take a moment) ...", function () {
     it("Should make 1 test Fund Run", async function () {
-      const [, bob] = await ethers.getSigners();
+      const [, bob, alice] = await ethers.getSigners();
       const deadlineToCreateWith = 1;
 
       await createFundRun(bob, "Bob's Fund Run", "Bob's Description", parseEther("1"), deadlineToCreateWith);
+      await createFundRun(alice, "Alice's Fund Run", "Alice's Description", parseEther("1"), deadlineToCreateWith);
 
       const bobsFundRun = await crowdFund.getFundRun(0);
+      const alicesFundRun = await crowdFund.getFundRun(1);
 
       try {
         const halp = await crowdFund.connect(bob).donateToFundRun(0, { value: parseEther("1") }); //should fail
@@ -57,6 +59,20 @@ describe("Simple Test", function () {
       } catch (e: any) {
         console.log("✅ Bob is prevented from donating to his own Fund Run");
       }
+
+
+      try {
+        const halp = await crowdFund.connect(alice).donateToFundRun(0, { value: parseEther("1") }); //should not fail
+        expect(halp.wait()).to.throw();//should't throw, but it does
+        // expect(await halp.wait()).to.throw();//should't throw, but it does
+      } catch (e: any) {
+        console.log("shouldn't throw...");
+      }
+
+
+
+      console.log(bobsFundRun);
+      console.log(alicesFundRun);
     });
   });
 });

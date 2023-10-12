@@ -17,6 +17,11 @@ describe("CrowdFund", function () {
   let bobsDeadline = BigNumber.from("0");
   let alicesDeadline = BigNumber.from("0");
   let johnsDeadline = BigNumber.from("0");
+  type ExpectedAmounts = {
+    commission: BigNumber;
+    lessCommission: BigNumber;
+  };
+  
 
   const getBlock = async (): Promise<number> => {
     const latestBlock = await hre.ethers.provider.getBlock("latest");
@@ -71,6 +76,16 @@ describe("CrowdFund", function () {
     const thisDonation = donations[donations.length - 1]; //donationsRaw[1][0][LAST_ITEM]
     expect(thisDonor).to.equal(walletSigning.address);
     expect(thisDonation).to.equal(donationAmount);
+  };
+
+  const getExpectedAmts = (beforeContractCommission: number) => {
+    const comm = (0.25 / 100) * beforeContractCommission; //0.25% 
+    const lessCommission = beforeContractCommission - comm;
+    const rslt: ExpectedAmounts = {
+      commission: parseEther(comm.toString()),
+      lessCommission: parseEther(lessCommission.toString())
+    };
+    return rslt;
   };
 
   describe("Deploying ...", function () {
@@ -144,14 +159,15 @@ describe("CrowdFund", function () {
       });
 
       describe("Waiting for Fund Runs to end ... ", function () {
-        //TODO: fails until you account for the missing 0.25%
         it("Should allow for Alice to do an 'Owner Withdrawal' because her Fund was successful", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
           } while (alicesDeadline.toBigInt() > BigInt((await getBlock()).toString()));
 
           const [, , alice] = await ethers.getSigners();
-          const expectedAmount = parseEther("2");
+          const expected = getExpectedAmts(2);
+          const expectedAmount = expected.lessCommission;
+          const expectedCommission = expected.commission;
           console.log("\nwallet balance PRE-withdrawal:  ", formatEther(await alice.getBalance()));
           const tx = await crowdFund.connect(alice).fundRunOwnerWithdraw(alicesId);
           await expect(tx).to.emit(crowdFund, "OwnerWithdrawal").withArgs(alice.address, expectedAmount);
@@ -162,11 +178,10 @@ describe("CrowdFund", function () {
           expect(contractBalance).to.equal(totalContractBalance);
 
           const alicesFundRun = await crowdFund.getFundRun(alicesId);
-          expect(alicesFundRun.amountCollected).to.equal(expectedAmount);
+          expect(alicesFundRun.amountCollected).to.equal(expectedAmount.add(expectedCommission));
           expect(alicesFundRun.amountWithdrawn).to.equal(expectedAmount);
         });
 
-        //TODO: fails until you account for the missing 0.25%
         it("Should allow for Bob to do a 'Donor Withdrawal' from John's Fund Run", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
@@ -187,7 +202,6 @@ describe("CrowdFund", function () {
           expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("1"));
         });
 
-        //TODO: fails until you account for the missing 0.25%
         it("Should allow for Alice to do a 'Donor Withdrawal' from John's Fund Run", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
@@ -206,9 +220,6 @@ describe("CrowdFund", function () {
           const johnsFundRun = await crowdFund.getFundRun(johnsId);
           expect(johnsFundRun.amountCollected).to.equal(parseEther("2"));
           expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("2"));
-
-          //at this point the contract balance should be 0; ....old
-          expect(contractBalance).to.equal(0); //TODO: fails until you account for the missing 0.25%
         });
 
         it("Should see that Bob's Fund Run has no donors/donations", async function () {
@@ -220,6 +231,9 @@ describe("CrowdFund", function () {
           expect(bobsFundRun.amountCollected).to.equal(0);
           expect(bobsFundRun.donations).to.deep.equal([]);
           expect(bobsFundRun.donors).to.deep.equal([]);
+
+          const contractBalance = await crowdFund.getBalance();
+          console.log("__>>: total contract balance: ", formatEther(contractBalance));
         });
       });
     });

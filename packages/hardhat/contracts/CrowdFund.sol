@@ -43,10 +43,10 @@ contract CrowdFund is Ownable {
 
 	mapping(uint256 => FundRun) public fundRuns;
 	mapping(address => DonorsLog) public donorLogs; //a single donor will have all of their logs (across all Fund Runs they donated to) here
-	uint16 public crowdFundCommission = 25; //.25% //todo:constant? private?
-	uint16 public crowdFundDenominator = 10000;
+	uint16 constant private crowdFundCommission = 25; //.25% 
+	uint16 constant private crowdFundDenominator = 10000;
 	uint16 public numberOfFundRuns = 0;
-	uint256 public commissionPayout = 0; //todo: private
+	uint256 private commissionPayout = 0; 
 	uint256 public totalProfitsTaken = 0;
 	address[] public fundRunOwners;
 
@@ -76,14 +76,13 @@ contract CrowdFund is Ownable {
 				fundRun.owner == sender,
 				"You are not the owner of this Fund Run."
 			);
-			_;
 		} else {
 			require(
 				fundRun.owner != sender,
 				"You own this Fund Run -- therefore, this operation is not allowed"
 			);
-			_;
 		}
+		_;
 	}
 
 	modifier fundRunCompleted(uint16 id, bool fundRunHasCompleted) {
@@ -93,14 +92,13 @@ contract CrowdFund is Ownable {
 				fundRun.deadline < block.timestamp,
 				"This Fund Run is not complete."
 			);
-			_;
 		} else {
 			require(
 				fundRun.deadline > block.timestamp,
 				"This Fund Run has already completed."
 			);
-			_;
 		}
+		_;
 	}
 
 	modifier fundRunSucceeded(uint16 id, bool fundRunHasSucceeded) {
@@ -110,14 +108,13 @@ contract CrowdFund is Ownable {
 				fundRun.amountCollected >= fundRun.target,
 				"This Fund Run has not yet met its monetary goal."
 			);
-			_;
 		} else {
 			require(
 				fundRun.amountCollected < fundRun.target,
 				"This Fund Run has already met its monetary goal."
 			);
-			_;
 		}
+		_;
 	}
 
 	constructor(address _contractOwner) {

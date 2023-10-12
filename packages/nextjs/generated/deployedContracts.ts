@@ -5,7 +5,7 @@ const contracts = {
       name: "localhost",
       contracts: {
         CrowdFund: {
-          address: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+          address: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
           abi: [
             {
               inputs: [
@@ -158,19 +158,6 @@ const contracts = {
             },
             {
               inputs: [],
-              name: "commissionPayout",
-              outputs: [
-                {
-                  internalType: "uint256",
-                  name: "",
-                  type: "uint256",
-                },
-              ],
-              stateMutability: "view",
-              type: "function",
-            },
-            {
-              inputs: [],
               name: "contractOwnerWithdraw",
               outputs: [],
               stateMutability: "nonpayable",
@@ -202,32 +189,6 @@ const contracts = {
               name: "createFundRun",
               outputs: [],
               stateMutability: "nonpayable",
-              type: "function",
-            },
-            {
-              inputs: [],
-              name: "crowdFundCommission",
-              outputs: [
-                {
-                  internalType: "uint16",
-                  name: "",
-                  type: "uint16",
-                },
-              ],
-              stateMutability: "view",
-              type: "function",
-            },
-            {
-              inputs: [],
-              name: "crowdFundDenominator",
-              outputs: [
-                {
-                  internalType: "uint16",
-                  name: "",
-                  type: "uint16",
-                },
-              ],
-              stateMutability: "view",
               type: "function",
             },
             {

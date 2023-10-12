@@ -157,84 +157,94 @@ describe("CrowdFund", function () {
 
         await donateToFundRun(alice, john, johnsId, amountToDonate, amountExpectedAfterDonation);
       });
+    });
 
-      describe("Waiting for Fund Runs to end ... ", function () {
-        it("Should allow for Alice to do an 'Owner Withdrawal' because her Fund was successful", async function () {
-          do {
-            await setTimeout(5000); //wait 5 more seconds
-          } while (alicesDeadline.toBigInt() > BigInt((await getBlock()).toString()));
+    describe("Waiting for Fund Runs to end ... ", function () {
+      it("Should allow for Alice to do an 'Owner Withdrawal' because her Fund was successful", async function () {
+        do {
+          await setTimeout(5000); //wait 5 more seconds
+        } while (alicesDeadline.toBigInt() > BigInt((await getBlock()).toString()));
 
-          const [, , alice] = await ethers.getSigners();
-          const expected = getExpectedAmts(2);
-          const expectedAmount = expected.lessCommission;
-          const expectedCommission = expected.commission;
-          console.log("\nwallet balance PRE-withdrawal:  ", formatEther(await alice.getBalance()));
-          const tx = await crowdFund.connect(alice).fundRunOwnerWithdraw(alicesId);
-          await expect(tx).to.emit(crowdFund, "OwnerWithdrawal").withArgs(alice.address, expectedAmount);
-          console.log("wallet balance POST-withdrawal: ", formatEther(await alice.getBalance()));
+        const [, , alice] = await ethers.getSigners();
+        const expected = getExpectedAmts(2);
+        const expectedAmount = expected.lessCommission;
+        const expectedCommission = expected.commission;
+        console.log("\nALICE'S wallet balance PRE-withdrawal:  ", formatEther(await alice.getBalance()));
+        const tx = await crowdFund.connect(alice).fundRunOwnerWithdraw(alicesId);
+        await expect(tx).to.emit(crowdFund, "OwnerWithdrawal").withArgs(alice.address, expectedAmount);
+        console.log("ALICE'S wallet balance POST-withdrawal: ", formatEther(await alice.getBalance()));
 
-          totalContractBalance = totalContractBalance.sub(expectedAmount);
-          const contractBalance = await crowdFund.getBalance();
-          expect(contractBalance).to.equal(totalContractBalance);
+        totalContractBalance = totalContractBalance.sub(expectedAmount);
+        const contractBalance = await crowdFund.getBalance();
+        expect(contractBalance).to.equal(totalContractBalance);
 
-          const alicesFundRun = await crowdFund.getFundRun(alicesId);
-          expect(alicesFundRun.amountCollected).to.equal(expectedAmount.add(expectedCommission));
-          expect(alicesFundRun.amountWithdrawn).to.equal(expectedAmount);
-        });
+        const alicesFundRun = await crowdFund.getFundRun(alicesId);
+        expect(alicesFundRun.amountCollected).to.equal(expectedAmount.add(expectedCommission));
+        expect(alicesFundRun.amountWithdrawn).to.equal(expectedAmount);
+      });
 
-        it("Should allow for Bob to do a 'Donor Withdrawal' from John's Fund Run", async function () {
-          do {
-            await setTimeout(5000); //wait 5 more seconds
-          } while (johnsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
+      it("Should allow for Bob to do a 'Donor Withdrawal' from John's Fund Run", async function () {
+        do {
+          await setTimeout(5000); //wait 5 more seconds
+        } while (johnsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
 
-          const [, bob, , john] = await ethers.getSigners();
-          console.log("\nwallet balance PRE-withdrawal:  ", formatEther(await bob.getBalance()));
-          const tx = await crowdFund.connect(bob).fundRunDonorWithdraw(johnsId);
-          await expect(tx).to.emit(crowdFund, "DonorWithdrawal").withArgs(john.address, bob.address, parseEther("1"));
-          console.log("wallet balance POST-withdrawal: ", formatEther(await bob.getBalance()));
+        const [, bob, , john] = await ethers.getSigners();
+        console.log("\nBOB'S wallet balance PRE-withdrawal:  ", formatEther(await bob.getBalance()));
+        const tx = await crowdFund.connect(bob).fundRunDonorWithdraw(johnsId);
+        await expect(tx).to.emit(crowdFund, "DonorWithdrawal").withArgs(john.address, bob.address, parseEther("1"));
+        console.log("BOB'S wallet balance POST-withdrawal: ", formatEther(await bob.getBalance()));
 
-          totalContractBalance = totalContractBalance.sub(parseEther("1"));
-          const contractBalance = await crowdFund.getBalance();
-          expect(contractBalance).to.equal(totalContractBalance);
+        totalContractBalance = totalContractBalance.sub(parseEther("1"));
+        const contractBalance = await crowdFund.getBalance();
+        expect(contractBalance).to.equal(totalContractBalance);
 
-          const johnsFundRun = await crowdFund.getFundRun(johnsId);
-          expect(johnsFundRun.amountCollected).to.equal(parseEther("2"));
-          expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("1"));
-        });
+        const johnsFundRun = await crowdFund.getFundRun(johnsId);
+        expect(johnsFundRun.amountCollected).to.equal(parseEther("2"));
+        expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("1"));
+      });
 
-        it("Should allow for Alice to do a 'Donor Withdrawal' from John's Fund Run", async function () {
-          do {
-            await setTimeout(5000); //wait 5 more seconds
-          } while (johnsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
+      it("Should allow for Alice to do a 'Donor Withdrawal' from John's Fund Run", async function () {
+        do {
+          await setTimeout(5000); //wait 5 more seconds
+        } while (johnsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
 
-          const [, , alice, john] = await ethers.getSigners();
-          console.log("\nwallet balance PRE-withdrawal:  ", formatEther(await alice.getBalance()));
-          const tx = await crowdFund.connect(alice).fundRunDonorWithdraw(johnsId);
-          await expect(tx).to.emit(crowdFund, "DonorWithdrawal").withArgs(john.address, alice.address, parseEther("1"));
-          console.log("wallet balance POST-withdrawal: ", formatEther(await alice.getBalance()));
+        const [, , alice, john] = await ethers.getSigners();
+        console.log("\nALICE'S wallet balance PRE-withdrawal:  ", formatEther(await alice.getBalance()));
+        const tx = await crowdFund.connect(alice).fundRunDonorWithdraw(johnsId);
+        await expect(tx).to.emit(crowdFund, "DonorWithdrawal").withArgs(john.address, alice.address, parseEther("1"));
+        console.log("ALICE'S wallet balance POST-withdrawal: ", formatEther(await alice.getBalance()));
 
-          totalContractBalance = totalContractBalance.sub(parseEther("1"));
-          const contractBalance = await crowdFund.getBalance();
-          expect(contractBalance).to.equal(totalContractBalance);
+        totalContractBalance = totalContractBalance.sub(parseEther("1"));
+        const contractBalance = await crowdFund.getBalance();
+        expect(contractBalance).to.equal(totalContractBalance);
 
-          const johnsFundRun = await crowdFund.getFundRun(johnsId);
-          expect(johnsFundRun.amountCollected).to.equal(parseEther("2"));
-          expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("2"));
-        });
+        const johnsFundRun = await crowdFund.getFundRun(johnsId);
+        expect(johnsFundRun.amountCollected).to.equal(parseEther("2"));
+        expect(johnsFundRun.amountWithdrawn).to.equal(parseEther("2"));
+      });
 
-        it("Should see that Bob's Fund Run has no donors/donations", async function () {
-          do {
-            await setTimeout(5000); //wait 5 more seconds
-          } while (bobsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
+      it("Should see that Bob's Fund Run has no donors/donations", async function () {
+        do {
+          await setTimeout(5000); //wait 5 more seconds
+        } while (bobsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
 
-          const bobsFundRun = await crowdFund.getFundRun(bobsId);
-          expect(bobsFundRun.amountCollected).to.equal(0);
-          expect(bobsFundRun.donations).to.deep.equal([]);
-          expect(bobsFundRun.donors).to.deep.equal([]);
+        const bobsFundRun = await crowdFund.getFundRun(bobsId);
+        expect(bobsFundRun.amountCollected).to.equal(0);
+        expect(bobsFundRun.donations).to.deep.equal([]);
+        expect(bobsFundRun.donors).to.deep.equal([]);
 
-          const contractBalance = await crowdFund.getBalance();
-          console.log("__>>: total contract balance: ", formatEther(contractBalance));
-        });
+        const contractBalance = await crowdFund.getBalance();
+        console.log("__>>: total contract balance: ", formatEther(contractBalance));
+      });
+    });
+
+    describe("Can Contract Owner withdraw ...", function () {
+      it("Should allow contract owner to withdraw 0.005 ethers", async function () {
+        const [owner] = await ethers.getSigners();
+        console.log("\nCONTRACT OWNER wallet balance PRE-withdrawal:  ", formatEther(await owner.getBalance()));
+        const tx = await crowdFund.connect(owner).contractOwnerWithdraw();
+        await expect(tx).to.emit(crowdFund, "ContractOwnerWithdrawal").withArgs(owner.address, totalContractBalance);
+        console.log("CONTRACT OWNER wallet balance POST-withdrawal:  ", formatEther(await owner.getBalance()));
       });
     });
   });

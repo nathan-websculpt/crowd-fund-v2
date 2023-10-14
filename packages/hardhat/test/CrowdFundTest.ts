@@ -241,10 +241,10 @@ describe("CrowdFund", function () {
     describe("Can Contract Owner withdraw ...", function () {
       it("Should allow contract owner to withdraw 0.005 ethers", async function () {
         const [owner] = await ethers.getSigners();
-        console.log("\nCONTRACT OWNER wallet balance PRE-withdrawal:  ", formatEther(await owner.getBalance()));
+        console.log("\nCONTRACT OWNER'S wallet balance PRE-withdrawal:  ", formatEther(await owner.getBalance()));
         const tx = await crowdFund.connect(owner).contractOwnerWithdraw();
         await expect(tx).to.emit(crowdFund, "ContractOwnerWithdrawal").withArgs(owner.address, totalContractBalance);
-        console.log("CONTRACT OWNER wallet balance POST-withdrawal:  ", formatEther(await owner.getBalance()));
+        console.log("CONTRACT OWNER'S wallet balance POST-withdrawal:  ", formatEther(await owner.getBalance()));
       });
     });
   });

@@ -73,18 +73,16 @@ export const CreateFund = () => {
   };
 
   const multiSigClickHandler = () => {
-    const selection = !isMultiSigSelected
+    const selection = !isMultiSigSelected;
     setIsMultiSigSelected(selection);
-    if(selection) 
-      setWalletCount(2);
-     else 
-      setWalletCount(1);
-  }
+    if (selection) setWalletCount(2);
+    else setWalletCount(1);
+  };
 
   const testtest = () => {
     console.log(additionalAddressOne);
     console.log(additionalAddressTwo);
-  }
+  };
 
   return (
     <>
@@ -147,9 +145,6 @@ export const CreateFund = () => {
               </div>
             </div>
             {/* ^^^ side-by-side on desktop, up-and-down on phone ^^^^ */}
-
-
-
             <label className="text-lg font-bold">Is this a Multisig Fund Run?</label>
             <div className="form-control">
               <label className="cursor-pointer label">
@@ -157,67 +152,73 @@ export const CreateFund = () => {
                 <input type="checkbox" className="checkbox checkbox-accent" onChange={multiSigClickHandler} />
               </label>
             </div>
+            {isMultiSigSelected && (
+              <>
+                <label className="text-lg font-bold">Total Number of Addresses</label>
+                <div className="form-control">
+                  <label className="cursor-pointer label">
+                    <span className="label-text">2 Addresses</span>
+                    <input
+                      value="2"
+                      type="radio"
+                      name="addresses"
+                      className="radio checked:bg-accent"
+                      checked={walletCount === 2}
+                      onChange={e => setWalletCount(parseInt(e.target.value))}
+                    />
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="cursor-pointer label">
+                    <span className="label-text">3 Addresses</span>
+                    <input
+                      value="3"
+                      type="radio"
+                      name="addresses"
+                      className="radio checked:bg-accent"
+                      checked={walletCount === 3}
+                      onChange={e => setWalletCount(parseInt(e.target.value))}
+                    />
+                  </label>
+                </div>
+              </>
+            )}
+            {walletCount === 2 && (
+              <>
+                <label className="text-lg font-bold">Extra Address One</label>
+                <input
+                  type="text"
+                  placeholder="First Additional Address"
+                  className="px-3 py-3 border rounded-lg bg-base-200 border-base-300"
+                  value={additionalAddressOne}
+                  onChange={e => setAdditionalAddressOne(e.target.value)}
+                />
+              </>
+            )}
+            {walletCount === 3 && (
+              <>
+                <label className="text-lg font-bold">Extra Address One</label>
+                <input
+                  type="text"
+                  placeholder="First Additional Address"
+                  className="px-3 py-3 border rounded-lg bg-base-200 border-base-300"
+                  value={additionalAddressOne}
+                  onChange={e => setAdditionalAddressOne(e.target.value)}
+                />
 
-            {isMultiSigSelected &&
-            <>
-              <label className="text-lg font-bold">Total Number of Addresses</label>
-              <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">2 Addresses</span> 
-                  <input value="2" type="radio" name="addresses" className="radio checked:bg-accent" checked={walletCount === 2} onChange={e => setWalletCount(parseInt(e.target.value))} />
-                </label>
-              </div>
-              <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">3 Addresses</span> 
-                  <input value="3" type="radio" name="addresses" className="radio checked:bg-accent" checked={walletCount === 3} onChange={e => setWalletCount(parseInt(e.target.value))} />
-                </label>
-              </div>
-            </>
-            }
-
-            {walletCount === 2 && 
-            <>
-              <label className="text-lg font-bold">Extra Address One</label>
-              <input
-                type="text"
-                placeholder="First Additional Address"
-                className="px-3 py-3 border rounded-lg bg-base-200 border-base-300"
-                value={additionalAddressOne}
-                onChange={e => setAdditionalAddressOne(e.target.value)}
-              />
-            </>
-            }
-
-            {walletCount === 3 && 
-            <>
-              <label className="text-lg font-bold">Extra Address One</label>
-              <input
-                type="text"
-                placeholder="First Additional Address"
-                className="px-3 py-3 border rounded-lg bg-base-200 border-base-300"
-                value={additionalAddressOne}
-                onChange={e => setAdditionalAddressOne(e.target.value)}
-              />
-
-              <label className="text-lg font-bold">Extra Address Two</label>
-              <input
-                type="text"
-                placeholder="Second Additional Address"
-                className="px-3 py-3 border rounded-lg bg-base-200 border-base-300"
-                value={additionalAddressTwo}
-                onChange={e => setAdditionalAddressTwo(e.target.value)}
-              />
-            </>
-            }
-
-            <button
-              className="w-10/12 mx-auto md:w-3/5 btn btn-primary"
-              onClick={() => testtest()}
-            >TEST
+                <label className="text-lg font-bold">Extra Address Two</label>
+                <input
+                  type="text"
+                  placeholder="Second Additional Address"
+                  className="px-3 py-3 border rounded-lg bg-base-200 border-base-300"
+                  value={additionalAddressTwo}
+                  onChange={e => setAdditionalAddressTwo(e.target.value)}
+                />
+              </>
+            )}
+            <button className="w-10/12 mx-auto md:w-3/5 btn btn-primary" onClick={() => testtest()}>
+              TEST
             </button>
-
-
             <button
               className="w-10/12 mx-auto md:w-3/5 btn btn-primary"
               onClick={() => validateThenWrite()}

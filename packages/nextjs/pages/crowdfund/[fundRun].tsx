@@ -18,10 +18,10 @@ const FundRunPage: NextPage = () => {
     eventName: "DonationHappened",
     listener: logs => {
       logs.map(log => {
-        const { owner, donor, amount } = log.args;
+        const { owners, donor, amount } = log.args;
         console.log(
           "📡 New Donation Event \nFund Run Owner:",
-          owner,
+          owners,
           "\nDonor: ",
           donor,
           "\nDonation amount: ",

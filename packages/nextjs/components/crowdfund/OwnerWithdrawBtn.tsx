@@ -10,8 +10,8 @@ export const OwnerWithdrawBtn = (owner: OwnerProps) => {
     eventName: "OwnerWithdrawal",
     listener: logs => {
       logs.map(log => {
-        const { owner, amount } = log.args;
-        console.log("📡 New Owner Withdrawal Event \nFund Run Owner:", owner, "\nWithdrawal Amount: ", amount);
+        const { owners, amount } = log.args;
+        console.log("📡 New Owner Withdrawal Event \nFund Run Owner:", owners, "\nWithdrawal Amount: ", amount);
       });
     },
   });

@@ -19,7 +19,7 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 contract CrowdFund is Ownable {
 	struct FundRun {
 		uint16 id; //not large enough in a prod scenario
-		address owner;
+		address[] owners;
 		string title;
 		string description;
 		uint256 target;
@@ -52,16 +52,16 @@ contract CrowdFund is Ownable {
 
 	event FundRunCreated(
 		uint16 id,
-		address owner,
+		address[] owners,
 		string title,
 		uint256 target
 	);
 
-	event DonationHappened(address owner, address donor, uint256 amount); //todo: rename to Donation
+	event DonationHappened(address[] owners, address donor, uint256 amount); //todo: rename to Donation
 
-	event OwnerWithdrawal(address owner, uint256 amount); //todo: rename to FundRunOwnerWithdrawal (because now we will have a contract owner withdrawal)
+	event OwnerWithdrawal(address[] owners, uint256 amount); //todo: rename to FundRunOwnerWithdrawal (because now we will have a contract owner withdrawal)
 
-	event DonorWithdrawal(address owner, address donor, uint256 amount);
+	event DonorWithdrawal(address[] owners, address donor, uint256 amount);
 
 	event ContractOwnerWithdrawal(address contractOwner, uint256 amount);
 
@@ -73,12 +73,12 @@ contract CrowdFund is Ownable {
 		FundRun storage fundRun = fundRuns[id];
 		if (senderOwnsThisFundRun) {
 			require(
-				fundRun.owner == sender,
+				isOwnerOfFundRun(sender, id),
 				"You are not the owner of this Fund Run."
 			);
 		} else {
 			require(
-				fundRun.owner != sender,
+				!isOwnerOfFundRun(sender, id),
 				"You own this Fund Run -- therefore, this operation is not allowed"
 			);
 		}
@@ -121,11 +121,19 @@ contract CrowdFund is Ownable {
 		_transferOwnership(_contractOwner);
 	}
 
+	//new multisig vault functionality:
+	//1. add transaction
+	//2. confirm transaction
+	//3. get confirmations count
+	//4. submit transaction
+	//5. execute transaction
+
 	function createFundRun(
 		string memory _title,
 		string memory _description,
 		uint256 _target,
-		uint16 _deadline
+		uint16 _deadline,
+		address[] memory _owners
 	) public {
 		uint256 fundRunDeadline = block.timestamp + _deadline * 60;
 		require(
@@ -141,29 +149,22 @@ contract CrowdFund is Ownable {
 		);
 		require(_target > 0, "Your money target must be greater than 0.");
 
-		address[] memory donorArray;
-		uint256[] memory donationsArray;
-		FundRun memory fundRun = FundRun({
-			id: numberOfFundRuns,
-			owner: msg.sender,
-			title: _title,
-			description: _description,
-			target: _target,
-			deadline: fundRunDeadline,
-			amountCollected: 0,
-			amountWithdrawn: 0,
-			isActive: true,
-			donors: donorArray,
-			donations: donationsArray
-		});
-
-		fundRuns[numberOfFundRuns] = fundRun;
-		fundRunOwners.push(msg.sender);
+		FundRun storage fundRun = fundRuns[numberOfFundRuns];
+		fundRun.id = numberOfFundRuns;
+		fundRun.owners = _owners;
+		fundRun.title = _title;
+		fundRun.description = _description;
+		fundRun.target = _target;
+		fundRun.deadline = fundRunDeadline;
+		fundRun.amountCollected = 0;
+		fundRun.amountWithdrawn = 0;
+		fundRun.isActive = true;
+		
+		fundRunOwners.push(msg.sender); //todo: rename to fundRunCreators???
 		numberOfFundRuns++;
-
 		emit FundRunCreated(
 			fundRun.id,
-			fundRun.owner,
+			fundRun.owners,
 			fundRun.title,
 			fundRun.target
 		);
@@ -199,7 +200,7 @@ contract CrowdFund is Ownable {
 		uint256 newAmountCollected = fundRun.amountCollected + amount;
 		fundRun.amountCollected = newAmountCollected;
 
-		emit DonationHappened(fundRun.owner, msg.sender, amount);
+		emit DonationHappened(fundRun.owners, msg.sender, amount);
 	}
 
 	function fundRunOwnerWithdraw(
@@ -253,7 +254,7 @@ contract CrowdFund is Ownable {
 		);
 
 		require(success, "Withdrawal reverted.");
-		if (success) emit OwnerWithdrawal(fundRun.owner, netWithdrawAmount);
+		if (success) emit OwnerWithdrawal(fundRun.owners, netWithdrawAmount);
 		//TODO: Handle else. Not done yet, because how this works will change
 	}
 
@@ -292,7 +293,7 @@ contract CrowdFund is Ownable {
 
 		require(success, "Withdrawal reverted.");
 		if (success)
-			emit DonorWithdrawal(fundRun.owner, msg.sender, amountToWithdraw);
+			emit DonorWithdrawal(fundRun.owners, msg.sender, amountToWithdraw);
 		//TODO: Handle else. Not done yet, because how this works will change
 	}
 
@@ -353,5 +354,19 @@ contract CrowdFund is Ownable {
 		returns (uint256 crowdFund_contractBalance)
 	{
 		return address(this).balance;
+	}
+
+	function getOwnersOfFundRun(uint16 _id) public view returns (address[] memory) {
+		FundRun storage fr = fundRuns[_id];
+		return fr.owners;
+	}
+
+	function isOwnerOfFundRun(address _addr, uint16 _id) public view returns (bool) {
+		FundRun storage thisFundRun = fundRuns[_id];
+		for(uint16 i = 0; i < thisFundRun.owners.length; i++) {
+			if(thisFundRun.owners[i] == _addr)
+				return true;
+		}
+		return false;
 	}
 }

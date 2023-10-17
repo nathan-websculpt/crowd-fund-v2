@@ -5,7 +5,7 @@ const contracts = {
       name: "localhost",
       contracts: {
         CrowdFund: {
-          address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+          address: "0x9A676e781A523b5d0C0e43731313A708CB607508",
           abi: [
             {
               inputs: [
@@ -42,9 +42,9 @@ const contracts = {
               inputs: [
                 {
                   indexed: false,
-                  internalType: "address",
-                  name: "owner",
-                  type: "address",
+                  internalType: "address[]",
+                  name: "owners",
+                  type: "address[]",
                 },
                 {
                   indexed: false,
@@ -67,9 +67,9 @@ const contracts = {
               inputs: [
                 {
                   indexed: false,
-                  internalType: "address",
-                  name: "owner",
-                  type: "address",
+                  internalType: "address[]",
+                  name: "owners",
+                  type: "address[]",
                 },
                 {
                   indexed: false,
@@ -98,9 +98,9 @@ const contracts = {
                 },
                 {
                   indexed: false,
-                  internalType: "address",
-                  name: "owner",
-                  type: "address",
+                  internalType: "address[]",
+                  name: "owners",
+                  type: "address[]",
                 },
                 {
                   indexed: false,
@@ -123,9 +123,9 @@ const contracts = {
               inputs: [
                 {
                   indexed: false,
-                  internalType: "address",
-                  name: "owner",
-                  type: "address",
+                  internalType: "address[]",
+                  name: "owners",
+                  type: "address[]",
                 },
                 {
                   indexed: false,
@@ -184,6 +184,11 @@ const contracts = {
                   internalType: "uint16",
                   name: "_deadline",
                   type: "uint16",
+                },
+                {
+                  internalType: "address[]",
+                  name: "_owners",
+                  type: "address[]",
                 },
               ],
               name: "createFundRun",
@@ -284,11 +289,6 @@ const contracts = {
                   type: "uint16",
                 },
                 {
-                  internalType: "address",
-                  name: "owner",
-                  type: "address",
-                },
-                {
                   internalType: "string",
                   name: "title",
                   type: "string",
@@ -382,9 +382,9 @@ const contracts = {
                       type: "uint16",
                     },
                     {
-                      internalType: "address",
-                      name: "owner",
-                      type: "address",
+                      internalType: "address[]",
+                      name: "owners",
+                      type: "address[]",
                     },
                     {
                       internalType: "string",
@@ -452,9 +452,9 @@ const contracts = {
                       type: "uint16",
                     },
                     {
-                      internalType: "address",
-                      name: "owner",
-                      type: "address",
+                      internalType: "address[]",
+                      name: "owners",
+                      type: "address[]",
                     },
                     {
                       internalType: "string",
@@ -505,6 +505,49 @@ const contracts = {
                   internalType: "struct CrowdFund.FundRun[]",
                   name: "",
                   type: "tuple[]",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "uint16",
+                  name: "_id",
+                  type: "uint16",
+                },
+              ],
+              name: "getOwnersOfFundRun",
+              outputs: [
+                {
+                  internalType: "address[]",
+                  name: "",
+                  type: "address[]",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  internalType: "address",
+                  name: "_addr",
+                  type: "address",
+                },
+                {
+                  internalType: "uint16",
+                  name: "_id",
+                  type: "uint16",
+                },
+              ],
+              name: "isOwnerOfFundRun",
+              outputs: [
+                {
+                  internalType: "bool",
+                  name: "",
+                  type: "bool",
                 },
               ],
               stateMutability: "view",

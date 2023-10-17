@@ -18,16 +18,17 @@ export const CreateFund = () => {
   const [walletCount, setWalletCount] = useState(1);
   const [additionalAddressOne, setAdditionalAddressOne] = useState("");
   const [additionalAddressTwo, setAdditionalAddressTwo] = useState("");
+  const [ownersList, setOwnersList] = useState<string[]>([]);
 
   useScaffoldEventSubscriber({
     contractName: "CrowdFund",
     eventName: "FundRunCreated",
     listener: logs => {
       logs.map(log => {
-        const { id, owner, title, target } = log.args;
+        const { id, owners, title, target } = log.args;
         console.log(
           "📡 New Fund Run Event \ncreator:",
-          owner,
+          owners,
           "\nID: ",
           id,
           "\nTitle: ",
@@ -35,7 +36,7 @@ export const CreateFund = () => {
           "\n  with a target of: ",
           target,
         );
-        if (address.address == owner) router.push(`/crowdfund/${id}`);
+        //if (address.address == owner) router.push(`/crowdfund/${id}`);
       });
     },
   });
@@ -43,7 +44,7 @@ export const CreateFund = () => {
   const { writeAsync, isLoading } = useScaffoldContractWrite({
     contractName: "CrowdFund",
     functionName: "createFundRun",
-    args: [titleInput, descInput, targetInput, deadlineInput],
+    args: [titleInput, descInput, targetInput, deadlineInput, ownersList],
     onBlockConfirmation: txnReceipt => {
       console.log("📦 Transaction blockHash", txnReceipt.blockHash);
       if (txnReceipt.status === "success") {
@@ -67,6 +68,17 @@ export const CreateFund = () => {
       setErrorMsg("The Deadline must be less than 65,535 ... it is a uint16 in the contract");
       setError(true);
       return;
+    }
+
+    const oList = [];
+    if (isMultiSigSelected) {
+      if (walletCount === 2) oList.push(additionalAddressOne);
+      else if (walletCount === 3) {
+        oList.push(additionalAddressOne);
+        oList.push(additionalAddressTwo);
+      }
+      //^^^changing this
+      //setOwnersList(oList);
     }
 
     writeAsync();

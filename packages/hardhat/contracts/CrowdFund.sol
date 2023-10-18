@@ -1,7 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
+// pragma experimental "ABIEncoderV2";
 
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import {ECDSA} from "../node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev NOT PRODUCTION-READY ... FOR LEARNING PURPOSES ONLY
@@ -40,6 +43,18 @@ contract CrowdFund is Ownable {
 		address donor;
 		mapping(uint256 => uint256) donorMoneyLog; //mapping(fundRunId => donationAmount)
 	}
+
+
+	//new
+	struct MultiSigRequest {
+		uint256 amount;
+		address to;
+		address proposedBy;
+	}
+    string constant private MSG_PREFIX = "\x19Ethereum Signed Message:\n32"; //todo:
+    uint256 public nonce;
+	//END:new
+
 
 	mapping(uint256 => FundRun) public fundRuns;
 	mapping(address => DonorsLog) public donorLogs; //a single donor will have all of their logs (across all Fund Runs they donated to) here
@@ -121,12 +136,99 @@ contract CrowdFund is Ownable {
 		_transferOwnership(_contractOwner);
 	}
 
-	//new multisig vault functionality:
+	//new multisig vault functionality (brainstorm):
 	//1. add transaction
 	//2. confirm transaction
 	//3. get confirmations count
 	//4. submit transaction
 	//5. execute transaction
+
+
+	///NEW multisig code
+	function multisigWithdraw(
+		MultiSigRequest calldata _tx, 
+		uint256 _nonce, 
+		bytes[] calldata _signatures,
+		uint16 _fundRunId 
+	)
+	external
+	///reentrancyGuard //todo:
+	{
+		console.log("HARDHAT CONSOLE__>   multisigWithdraw hit");
+        _verifyMultisigRequest(_tx, _nonce, _signatures, _fundRunId);
+        _multisigTransfer(_tx, _fundRunId);
+	}
+
+    function _verifyMultisigRequest(
+        MultiSigRequest calldata _tx,
+        uint256 _nonce,
+        bytes[] calldata _signatures,
+		uint16 _fundRunId 
+    )
+    private
+    {
+		console.log("HARDHAT CONSOLE__>   _verifyMultisigRequest hit");
+        require(_nonce > nonce, "nonce already used");
+        uint256 count = _signatures.length;
+        require(count == fundRuns[_fundRunId].owners.length, "not enough signers");
+        bytes32 digest = _processMultisigRequest(_tx, _nonce);
+		console.log("HARDHAT CONSOLE__>        made it through all the requires of _verifyMultisigRequest w/ nonce:", _nonce, ", signatures count: ", count);
+
+        address initialSigner; 
+        for (uint256 i = 0; i < count; i++)
+        {
+            bytes memory signature = _signatures[i];
+            address signer = ECDSA.recover(digest, signature);
+            require(signer != initialSigner, "duplicate signature has been prevented.");
+			console.log("HARDHAT CONSOLE__>        not a duplicate.....");
+			console.log("HARDHAT CONSOLE__>        signer Address: ", signer);
+            //require(isSignerValid(signer), "not a co-owner of this Fund Run"); //todo:
+            initialSigner = signer;
+        }
+        nonce = _nonce;
+    }
+	
+    function _multisigTransfer (
+        MultiSigRequest calldata _tx,
+		uint16 _fundRunId 
+    )
+    private
+    {
+		FundRun storage fundRun = fundRuns[_fundRunId];
+		console.log("HARDHAT CONSOLE__>   _multisigTransfer hit");
+		console.log("HARDHAT CONSOLE__>        fund run id: ", fundRun.id, ", title: ", fundRun.title);
+		require(fundRun.amountWithdrawn + _tx.amount <= fundRun.amountCollected, "Fund Run does not have this much Ether");
+		fundRun.amountWithdrawn += _tx.amount;
+        (bool success, ) = payable(_tx.to).call{ value: _tx.amount }(
+			""
+		);
+		console.log("HARDHAT CONSOLE__>         tx success: ", success, ", to address: ", _tx.to);
+		console.log("HARDHAT CONSOLE__>              for the amount of: ", _tx.amount);
+        require(success, "Transfer not fulfilled");
+    }
+
+    function _processMultisigRequest(
+        MultiSigRequest calldata _tx,
+        uint256 _nonce 
+    )
+    private 
+    pure
+    returns(bytes32 _digest)
+    {
+        bytes memory encoded = abi.encode(_tx);
+        _digest = keccak256(abi.encodePacked(encoded, _nonce));
+        _digest = keccak256(abi.encodePacked(MSG_PREFIX, _digest));
+    }
+	///END: NEW multisig code
+
+
+
+
+
+
+
+
+
 
 	function createFundRun(
 		string memory _title,

@@ -23,6 +23,34 @@ describe("Multisig Test", function () {
     return latestBlock.timestamp;
   };
 
+  const getNonce = async () => (await crowdFund.nonce()).add(1);
+
+  const getDigest = async (
+    nonce: BigNumber,
+    amount: BigNumber,
+    to: string,
+    proposedBy: string
+) => {
+    const tx = {amount, to, proposedBy};
+    const encoded = ethers.utils.defaultAbiCoder.encode(["tuple(uint256,address,address)"],  [[tx.amount, tx.to, tx.proposedBy]]);
+    const encodedWithNonce = ethers.utils.solidityPack(["bytes", "uint256"], [encoded, nonce]);
+
+    const digest= ethers.utils.keccak256(encodedWithNonce);
+  return digest;
+}
+const signMultisigWithdraw = async (
+    walletSigning: SignerWithAddress,
+    nonce: BigNumber,
+    amount: BigNumber,
+    to: string,
+    proposedBy: string,
+    signatures: string[],
+    fundRunID: number
+) => {
+    const tx = {amount, to, proposedBy};
+    return await crowdFund.connect(walletSigning).multisigWithdraw(tx, nonce, signatures, fundRunID); 
+}
+
   //creates a Fund Run as bob, alice, or john ... then checks the Event
   const createFundRun = async (
     walletSigning: SignerWithAddress,
@@ -63,6 +91,7 @@ describe("Multisig Test", function () {
         await createFundRun(bob, "Bob's Fund Run", "Bob's Description", parseEther("1"), deadlineToCreateWith, [bob.address]);
         const bobsFundRun = await crowdFund.getFundRun(0);
         console.log("\n\nNew (REGULAR) Fund Run...\ntitle: ", bobsFundRun.title, "\nOwners: ", bobsFundRun.owners);
+        expect(bobsFundRun.amountCollected).to.equal(0n);
       });
 
       it("Should make a (2-Sig) MULTISIG Fund Run", async function () {
@@ -81,6 +110,7 @@ describe("Multisig Test", function () {
         const multiSigFundRun = await crowdFund.getFundRun(1);
         aliceJohnsDeadline = multiSigFundRun.deadline;
         console.log("\n\nNew (MULTISIG 2 tx) Fund Run...\ntitle: ", multiSigFundRun.title, "\nOwners: ", multiSigFundRun.owners);
+        expect(multiSigFundRun.amountCollected).to.equal(0n);
       });
 
       it("Should make a (3-sig) MULTISIG Fund Run", async function () {
@@ -99,6 +129,7 @@ describe("Multisig Test", function () {
         const multiSigFundRun = await crowdFund.getFundRun(2);
         chandlerJoeyRossDeadline = multiSigFundRun.deadline;
         console.log("\n\nNew (MULTISIG 3 tx) Fund Run...\ntitle: ", multiSigFundRun.title, "\nOwners: ", multiSigFundRun.owners);
+        expect(multiSigFundRun.amountCollected).to.equal(0n);
       });
     });
 
@@ -111,6 +142,7 @@ describe("Multisig Test", function () {
         await tx.wait();
         const multiSigFundRun = await crowdFund.getFundRun(fundRunID);
         console.log("\n\nTitle: ", multiSigFundRun.title, "\nDonations: ", multiSigFundRun.donations[0].toString(), "\nDonors: ", multiSigFundRun.donors);
+        expect(multiSigFundRun.amountCollected).to.equal(donationAmount);
        }); 
 
        it("Should complete all donations to the (3-sig)", async function() {
@@ -121,28 +153,69 @@ describe("Multisig Test", function () {
         await tx.wait();
         const multiSigFundRun = await crowdFund.getFundRun(fundRunID);
         console.log("\n\nTitle: ", multiSigFundRun.title, "\nDonations: ", multiSigFundRun.donations[0].toString(), "\nDonors: ", multiSigFundRun.donors);
+        expect(multiSigFundRun.amountCollected).to.equal(donationAmount);
        }); 
     });
-
-    //todo: wait for FundRuns to end...
-    //todo: test multisig/vault transactions 
-
+    
+    
     
     describe("Waiting for Fund Runs to end ... ", function () {
-        it("...do some fancy multisig vault stuff", async function () {
+        it("...Alice proposes to pay John 0.25 Ethers", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
           } while (aliceJohnsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
-          console.log("\n\nAlice/John's Fund Run is over -- deadline passed")
-          
+          console.log("\n\nAlice/John's Fund Run is over -- deadline passed");
+
+          const [, , alice, john] = await ethers.getSigners();
+          const fundRunID = 1;     
+          const transferAmount = parseEther("0.25");
+          const johnFirstBalance = await john.getBalance();
+          const johnExpectedBalance = await johnFirstBalance.add(transferAmount);
+          console.log("Alice's Address: ", alice.address);
+          console.log("John's Address: ", john.address);
+          console.log("John has a balance of: ", formatEther(johnFirstBalance));
+
+
+          const nonce = await getNonce();
+          const digest = await getDigest(nonce, transferAmount, john.address, alice.address);
+          const signatures = [];
+          signatures.push(await alice.signMessage(ethers.utils.arrayify(digest)));
+          signatures.push(await john.signMessage(ethers.utils.arrayify(digest)));
+          console.log("signatures", signatures);
+          const tx = await signMultisigWithdraw(john, nonce, transferAmount, john.address, alice.address, signatures, fundRunID);
+          await tx.wait();
+          const johnNewBalance = await john.getBalance();
+          console.log("John NOW has a balance of: ", formatEther(johnNewBalance));
+          expect(johnNewBalance).to.approximately(johnExpectedBalance, 10000000000000000n);
         });
-        
-        it("...do even more fancy multisig vault stuff", async function () {
-            do {
-                await setTimeout(5000); //wait 5 more seconds
-            } while (chandlerJoeyRossDeadline.toBigInt() > BigInt((await getBlock()).toString()));
-            console.log("\n\nChandler/Joey/Ross Fund Run is over -- deadline passed")
-            
+
+        //paying someone who is not the owner IS allowed, because a group can pay tertiary parties (like designers, etc)
+        it("...John proposes to pay Bob (who is not an owner) 0.75 Ethers", async function () {  
+            const [, bob, alice, john] = await ethers.getSigners();
+            const fundRunID = 1;     
+            const transferAmount = parseEther("0.75");
+            const bobFirstBalance = await bob.getBalance();
+            const bobExpectedBalance = await bobFirstBalance.add(transferAmount);
+            console.log("Bob has a balance of: ", formatEther(bobFirstBalance));
+  
+  
+            const nonce = await getNonce();
+            const digest = await getDigest(nonce, transferAmount, bob.address, john.address);
+            const signatures = [];
+            signatures.push(await john.signMessage(ethers.utils.arrayify(digest)));
+            signatures.push(await alice.signMessage(ethers.utils.arrayify(digest)));
+            console.log("signatures", signatures);
+            const tx = await signMultisigWithdraw(alice, nonce, transferAmount, bob.address, john.address, signatures, fundRunID);
+            await tx.wait();
+            const bobNewBalance = await bob.getBalance();
+            console.log("Bob NOW has a balance of: ", formatEther(bobNewBalance));
+            expect(bobNewBalance).to.approximately(bobExpectedBalance, 10000000000000000n);
+          });
+
+
+        //todo:
+        it("...test a 3-sig vault", async function () {
+                        
         });
     });
   

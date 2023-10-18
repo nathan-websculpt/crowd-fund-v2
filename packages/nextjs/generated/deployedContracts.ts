@@ -5,7 +5,7 @@ const contracts = {
       name: "localhost",
       contracts: {
         CrowdFund: {
-          address: "0x9A676e781A523b5d0C0e43731313A708CB607508",
+          address: "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
           abi: [
             {
               inputs: [
@@ -548,6 +548,64 @@ const contracts = {
                   internalType: "bool",
                   name: "",
                   type: "bool",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [
+                {
+                  components: [
+                    {
+                      internalType: "uint256",
+                      name: "amount",
+                      type: "uint256",
+                    },
+                    {
+                      internalType: "address",
+                      name: "to",
+                      type: "address",
+                    },
+                    {
+                      internalType: "address",
+                      name: "proposedBy",
+                      type: "address",
+                    },
+                  ],
+                  internalType: "struct CrowdFund.MultiSigRequest",
+                  name: "_tx",
+                  type: "tuple",
+                },
+                {
+                  internalType: "uint256",
+                  name: "_nonce",
+                  type: "uint256",
+                },
+                {
+                  internalType: "bytes[]",
+                  name: "_signatures",
+                  type: "bytes[]",
+                },
+                {
+                  internalType: "uint16",
+                  name: "_fundRunId",
+                  type: "uint16",
+                },
+              ],
+              name: "multisigWithdraw",
+              outputs: [],
+              stateMutability: "nonpayable",
+              type: "function",
+            },
+            {
+              inputs: [],
+              name: "nonce",
+              outputs: [
+                {
+                  internalType: "uint256",
+                  name: "",
+                  type: "uint256",
                 },
               ],
               stateMutability: "view",

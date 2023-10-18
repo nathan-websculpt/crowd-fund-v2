@@ -160,7 +160,7 @@ const signMultisigWithdraw = async (
     
     
     describe("Waiting for Fund Runs to end ... ", function () {
-        it("...Alice proposes to pay John 0.25 Ethers", async function () {
+        it("(2-sig wallet)...Alice proposes to pay John 0.25 Ethers", async function () {
           do {
             await setTimeout(5000); //wait 5 more seconds
           } while (aliceJohnsDeadline.toBigInt() > BigInt((await getBlock()).toString()));
@@ -190,7 +190,7 @@ const signMultisigWithdraw = async (
         });
 
         //paying someone who is not the owner IS allowed, because a group can pay tertiary parties (like designers, etc)
-        it("...John proposes to pay Bob (who is not an owner) 0.75 Ethers", async function () {  
+        it("(2-sig wallet)...John proposes to pay Bob (who is not an owner) 0.75 Ethers", async function () {  
             const [, bob, alice, john] = await ethers.getSigners();
             const fundRunID = 1;     
             const transferAmount = parseEther("0.75");
@@ -213,9 +213,54 @@ const signMultisigWithdraw = async (
           });
 
 
-        //todo:
-        it("...test a 3-sig vault", async function () {
-                        
+        it("(3-sig wallet)...The Chan-Chan Man proposes to pay Bob 0.5 Ethers", async function () {
+            const [, bob, , , chandler, joey, ross] = await ethers.getSigners();
+
+            const fundRunID = 2;
+            const transferAmount = parseEther("0.5");
+
+            const bobFirstBalance = await bob.getBalance();
+            const bobExpectedBalance = await bobFirstBalance.add(transferAmount);
+            console.log("Bob has a balance of: ", formatEther(bobFirstBalance));
+            
+            const nonce = await getNonce();
+            const digest = await getDigest(nonce, transferAmount, bob.address, chandler.address);
+            const signatures = [];
+            signatures.push(await chandler.signMessage(ethers.utils.arrayify(digest)));
+            signatures.push(await joey.signMessage(ethers.utils.arrayify(digest)));
+            signatures.push(await ross.signMessage(ethers.utils.arrayify(digest)));
+            console.log("signatures", signatures);
+            const tx = await signMultisigWithdraw(ross, nonce, transferAmount, bob.address, chandler.address, signatures, fundRunID);
+            await tx.wait();
+            const bobNewBalance = await bob.getBalance();
+            console.log("Bob NOW has a balance of: ", formatEther(bobNewBalance));
+            expect(bobNewBalance).to.approximately(bobExpectedBalance, 10000000000000000n);
+
+        });
+        
+        it("(3-sig wallet)...Ross proposes to pay Alice 0.5 Ethers", async function () {
+            const [, , alice, , chandler, joey, ross] = await ethers.getSigners();
+
+            const fundRunID = 2;
+            const transferAmount = parseEther("0.5");
+
+            const aliceFirstBalance = await alice.getBalance();
+            const aliceExpectedBalance = await aliceFirstBalance.add(transferAmount);
+            console.log("Alice has a balance of: ", formatEther(aliceFirstBalance));
+            
+            const nonce = await getNonce();
+            const digest = await getDigest(nonce, transferAmount, alice.address, ross.address);
+            const signatures = [];
+            signatures.push(await ross.signMessage(ethers.utils.arrayify(digest)));
+            signatures.push(await joey.signMessage(ethers.utils.arrayify(digest)));
+            signatures.push(await chandler.signMessage(ethers.utils.arrayify(digest)));
+            console.log("signatures", signatures);
+            const tx = await signMultisigWithdraw(chandler, nonce, transferAmount, alice.address, ross.address, signatures, fundRunID);
+            await tx.wait();
+            const aliceNewBalance = await alice.getBalance();
+            console.log("Alice NOW has a balance of: ", formatEther(aliceNewBalance));
+            expect(aliceNewBalance).to.approximately(aliceExpectedBalance, 10000000000000000n);
+
         });
     });
   

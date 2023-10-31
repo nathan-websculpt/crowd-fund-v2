@@ -13,7 +13,7 @@ interface CreateProposalProps {
 export const CreateProposal = (proposal: CreateProposalProps) => {
   const userAddress = useAccount();
   const [transferInput, setTransferInput] = useState("0.1");
-  const [toAddressInput, setToAddressInput] = useState("0xB7F675970703342938e58A6C8E76C6D47fC78FDA");
+  const [toAddressInput, setToAddressInput] = useState("0x091897BC27A6D6b1aC216b0B0059C0Fa4ECF5298");
   const [creationSignature, setCreationSignature] = useState<SignMessageReturnType>();
 
   const { data: walletClient } = useWalletClient();
@@ -46,6 +46,13 @@ export const CreateProposal = (proposal: CreateProposalProps) => {
   }; //todo: refactor
   const getDigest = async (nonce: bigint, amount: BigNumber, to: string, proposedBy: string, reason: string) => {
     const tx = { amount, to, proposedBy, reason };
+
+    console.log("getDigest amount: ", amount.toString());
+    console.log("getDigest to: ", to);
+    console.log("getDigest proposedBy: ", proposedBy);
+    console.log("getDigest reason: ", reason);
+
+    
     const encoded = defaultAbiCoder.encode(
       ["tuple(uint256,address,address,string)"],
       [[tx.amount, tx.to, tx.proposedBy, tx.reason]],
@@ -65,8 +72,14 @@ export const CreateProposal = (proposal: CreateProposalProps) => {
       userAddress.address,
       "test proposal",
     );
+    
     console.log("digest", digest);
-    console.log("wallet client", walletClient?.account);
+    console.log("digest, made w/ wallet client", walletClient?.account);
+    console.log("digest, made w/ user addr: ", userAddress.address);
+    console.log("digest, made w/ to addr: ", toAddressInput);
+    console.log("digest, made w/ amt: ", parseEther(transferInput).toString());
+
+    
     const proposalCreationSig: any = await walletClient?.signMessage({
       account: walletClient.account,
       message: { raw: arrayify(digest) },

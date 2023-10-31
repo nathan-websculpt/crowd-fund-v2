@@ -9,8 +9,8 @@ interface FinalizeProposalProps {
 
 export const FinalizeProposal = (proposal: FinalizeProposalProps) => {
   const [transferInput, setTransferInput] = useState<bigint>(BigInt(100000000000000000));
-  const [toAddressInput, setToAddressInput] = useState("0xB7F675970703342938e58A6C8E76C6D47fC78FDA");
-  const [proposedByInput, setProposedByInput] = useState("0xC4d53E07a6521EA73759D1541070BEf3C0823809");
+  const [toAddressInput, setToAddressInput] = useState("0x091897BC27A6D6b1aC216b0B0059C0Fa4ECF5298");
+  const [proposedByInput, setProposedByInput] = useState("0x1e714A71223529199167c1f26662f456ac1f7FBc");
   const [reasonInput, setReasonInput] = useState("test proposal");
   const [proposalIdInput, setProposalIdInput] = useState<number>();
   const [nonceInput, setNonceInput] = useState<bigint>();
@@ -29,9 +29,12 @@ export const FinalizeProposal = (proposal: FinalizeProposalProps) => {
     const nonce = getNewNonce();
     setNonceInput(nonce);
     console.log("nonce: ", nonce);
-    console.log("tx: ", tx);
     console.log("fund run id: ", proposal.id);
     console.log("proposal id: ", proposalIdInput);
+    console.log("amount: ", transferInput.toString());
+    console.log("to: ", toAddressInput);
+    console.log("proposedBy: ", proposedByInput);
+    console.log("reason: ", reasonInput);
   };
 
   const { writeAsync, isLoading } = useScaffoldContractWrite({

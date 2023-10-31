@@ -13,8 +13,8 @@ interface SupportProposalProps {
 
 export const SupportProposal = (proposal: SupportProposalProps) => {
     const [transferInput, setTransferInput] = useState("0.1");
-    const [toAddressInput, setToAddressInput] = useState("0xB7F675970703342938e58A6C8E76C6D47fC78FDA");
-    const [proposedByAddressInput, setProposedByAddressInput] = useState("0xC4d53E07a6521EA73759D1541070BEf3C0823809");
+    const [toAddressInput, setToAddressInput] = useState("0x091897BC27A6D6b1aC216b0B0059C0Fa4ECF5298");
+    const [proposedByAddressInput, setProposedByAddressInput] = useState("0x1e714A71223529199167c1f26662f456ac1f7FBc");
     const [supportSignature, setSupportSignature] = useState<SignMessageReturnType>();
     const [proposalIdInput, setProposalIdInput] = useState<number>();
 
@@ -57,6 +57,14 @@ functionName: "getNonce",
 ) => {
     const tx = {amount, to, proposedBy, reason};
     const encoded = defaultAbiCoder.encode(["tuple(uint256,address,address,string)"],  [[tx.amount, tx.to, tx.proposedBy, tx.reason]]);
+
+    
+
+    console.log("getDigest amount: ", tx.amount.toString());
+    console.log("getDigest to: ", tx.to);
+    console.log("getDigest proposedBy: ", tx.proposedBy);
+    console.log("getDigest reason: ", tx.reason);
+
     const encodedWithNonce = solidityPack(["bytes", "uint256"], [encoded, nonce]);
 
     const digest= keccak256(encodedWithNonce);
@@ -69,8 +77,14 @@ functionName: "getNonce",
   const supportProposal = async () => {
     const nonce = getNewNonce();          //TODO: get from the proposal and To Address
     const digest = await getDigest(nonce, parseEther(transferInput), toAddressInput, proposedByAddressInput, "test proposal");
-    console.log('digest', digest);
-    console.log('wallet client', walletClient?.account);
+
+    
+    console.log("nonce: ", nonce);
+    console.log("digest", digest);
+    console.log("wallet client", walletClient?.account);
+    console.log("digest, made w/ wallet client", walletClient?.account);
+
+    
     const proposalSupportSig:any = 
       await walletClient?.signMessage(
         {

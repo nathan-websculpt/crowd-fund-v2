@@ -1,11 +1,11 @@
 const contracts = {
-  31337: [
+  11155111: [
     {
-      chainId: "31337",
-      name: "localhost",
+      chainId: "11155111",
+      name: "sepolia",
       contracts: {
         CrowdFund: {
-          address: "0x162A433068F51e18b7d13932F27e66a3f99E6890",
+          address: "0x3FC23041123011AF096d4810934eB8B177c3AFcb",
           abi: [
             {
               inputs: [

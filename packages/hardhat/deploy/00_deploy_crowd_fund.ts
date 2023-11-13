@@ -4,7 +4,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 const deployCrowdFund: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
-  const owner = "0x3c4F8cb2ea3FFfFD8f9a1BEF9119F3E12ACC95d0"; //todo change to fe wallet
+  const owner = "0x1e7aAbB9D0C701208E875131d0A1cFcDAba79350";
   await deploy("CrowdFund", {
     from: deployer,
     args: [owner],

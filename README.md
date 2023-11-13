@@ -2,7 +2,7 @@
 
 A multisig “Crowdfunding” dApp
 
-⚙️ Built with [Scaffold-ETH 2](#Contents), using NextJS, RainbowKit, Hardhat, Wagmi, and Typescript.
+⚙️ Built with [Scaffold-ETH 2](#Contents), using NextJS, RainbowKit, Hardhat, Wagmi, and Typescript. 
 
 #### Follow-along blogs:
 

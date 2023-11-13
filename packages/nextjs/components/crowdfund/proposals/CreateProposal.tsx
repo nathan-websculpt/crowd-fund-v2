@@ -14,7 +14,7 @@ interface CreateProposalProps {
 export const CreateProposal = (fundRun: CreateProposalProps) => {
   const userAddress = useAccount();
   const [transferInput, setTransferInput] = useState("0.1");
-  const [toAddressInput, setToAddressInput] = useState("0xd6119D0a6aaFE3a2aDF7733523126CF73C1C073C");
+  const [toAddressInput, setToAddressInput] = useState("");
   const [reasonInput, setReasonInput] = useState("test proposal");
   const [creationSignature, setCreationSignature] = useState<SignMessageReturnType>();
 

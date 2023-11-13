@@ -6,13 +6,23 @@ A multisig “Crowdfunding” dApp; [V1](https://github.com/nathan-websculpt/cro
 ⚙️ Built with [Scaffold-ETH 2](#Contents), using NextJS, RainbowKit, Hardhat, Wagmi, and Typescript.
 
 
-
+## ✅ Testing ...
+### Testing on browser 📱
 https://github.com/nathan-websculpt/crowd-fund-v2/assets/58645278/d6fc16c6-ec37-4d85-8a1c-37bb4072a44a
 
+### 🧶 Yarn Tests
+ - 🗝️ 🔒 Single-Owner Tests
+ ```
+ yarn test ./test/CrowdFundTest.ts
+ ```
+ - 🗝️🗝️🗝️ 🔒 Multisig Tests
+ ```
+ yarn test ./test/MultisigTest.ts
+ ```
 
-## Overview
+## 🙂 Overview
 
-### 🔎🔎🔎 *NEW Multisig Vaults:*
+### 🔎🔎🔎 *Changes from V1:*
 
 - Fund Runs can now be created with **multiple owners** 🔐
 - Unlike Single-Owner Vaults, transactions from a Multisig Vault *must be approved* by **all of the Vault's Owners**
@@ -24,21 +34,21 @@ https://github.com/nathan-websculpt/crowd-fund-v2/assets/58645278/d6fc16c6-ec37-
 ### 📜 *The 'rules-of-use' for Single-Wallet "Fund Runs":*
 
 - Crowd Fund is a way for users to create **“Fund Runs”** that other users can donate to.
-- These Fund Runs have deadlines 
+- These Fund Runs have deadlines ⌛
   - defined in *minutes* by the user during Fund Run creation
 - Fund Runs also have a *target money goal* 
 - A donor can get their funds back from a Fund Run **IF**:
-  - The deadline has passed
+  - The deadline ⌛ has passed
   - The fund failed to raise its target capital
 - An owner can get their new donations **IF**:
-  - The deadline has passed
+  - The deadline ⌛ has passed
   - The fund’s donations are greater-than/equal-to the *target money goal*
 
 ###  📜 *The 'rules-of-use' for Multisig "Fund Runs":*
 - The mindset of a multisig vault is that payments made (from it) are more granular 
 - If a user wants to get all of their funds at once, a Single-Wallet "Fund Run" is a better choice
 - A Multisig Fund Run is good for users who want to show their donors a set of record-logs for payments coming out of their vault
-  - Examples: 
+  - Examples: 💸💸💸
     - "We want to **pay *0x0123*** 0.4 Ether for *'Web Design Services'*" 
     - "We want to **pay *0x0456*** 0.1 Ether for *'Telegram Mod Services'*"
     - "We want to **pay *0x0789*** 0.7 Ether for *'Coding like the wind'*"
@@ -46,12 +56,26 @@ https://github.com/nathan-websculpt/crowd-fund-v2/assets/58645278/d6fc16c6-ec37-
 - These Vaults offer donors a granular view of where their funds ended up
 
 ### 🔗 *CrowdFund.sol*
-- Contract now takes 0.25% profit of all withdrawals out of successful Fund Runs
+- Contract now takes 0.25% profit of all withdrawals out of *successful* Fund Runs
   - (does not take from donors)
 - The **FundRun** *struct* will hold the Fund Run's data
   - While a second *struct* (**DonorsLog**) maintains a mapping of *fundRunId* =>   *donationAmount*
     - Therefore, a user's (a donor's) address will then map to their **DonorsLog** (which - itself - is keeping all of the user's donations [to various Fund Runs] separated)
-- More notes on Contract to come...
+- **Multisig Vaults** 🗝️🗝️🗝️ 🔒
+  - The **MultiSigRequest** *struct* will be used as the Tx/Tuple for signing
+  - The **MultiSigVault** *struct* has additional data: *proposalId* and *status*
+  - Send a **MultiSigRequest** (along with the *signature* and *fundRunId*) to *createMultisigProposal()* to create a new proposal
+  - *supportMultisigProposal()* simply pushes the *signature* and the *msg.sender* to arrays on the **mappings**: *signatureList* and *signerList*
+  - **_verifyMultisigRequest()** occurs before any funds are sent
+    - uses a **MultiSigRequest** *(along with the nonce)* to re-create a digest that will be recovered/checked using EACH signature in *signatureList*
+      - **ECDSA**.*recover(digest, signature)*
+  - Each Vault has its own **incrementing nonce**
+    - This means that proposals do need to be created/sent in order, but Vaults do not interfere with one another
+    - Stale proposals preventing transactions can be revoked
+  - **Revoking Proposals:** Only the user who created a proposal can revoke it
+  - since the signatures are stored on the contract...
+    - ...this version should work out-of-the-box on your machine
+      - moving signatures off-chain for V3
 
 ## 🧐 Before You Start
 
@@ -105,7 +129,9 @@ Run smart contract test with `yarn hardhat:test`
 
 ## 📝 Testing CrowdFund.sol
 Test script: *`packages/hardhat/test/CrowdFundTest.ts`*
-
+ ```
+ yarn test ./test/CrowdFundTest.ts
+ ```
 The test script will act on behalf of 3 test users: Alice, Bob, and John.
 
 **Alice, Bob, and John will all three make Fund Runs...**
@@ -120,6 +146,10 @@ The test then ensures that:
 - Alice and Bob both can do a 'Donor Withdrawal' from John's Fund
 - Bob's Fund is empty
 
+##### 🗝️🗝️🗝️ 🔒  For Multisig Tests: 
+ ```
+ yarn test ./test/MultisigTest.ts
+ ```
 <br />
 <br />
 

@@ -4,9 +4,15 @@ A multisig “Crowdfunding” dApp
 
 ⚙️ Built with [Scaffold-ETH 2](#Contents), using NextJS, RainbowKit, Hardhat, Wagmi, and Typescript.
 
+#### Follow-along blogs:
+
+- [Blog for the Smart Contract](https://medium.com/@websculpt/building-a-project-with-se-2-crowd-fund-part-four-multisig-contract-5f682f8e365d)
+- [Blog for the frontend components](https://medium.com/@websculpt/building-a-project-with-se-2-crowd-fund-part-five-multisig-components-b8cc6b2a66c9)
 
 ## ✅ Testing ...
+
 ### Testing on browser 📱
+
 https://github.com/nathan-websculpt/crowd-fund-v2/assets/58645278/d6fc16c6-ec37-4d85-8a1c-37bb4072a44a
 
 ### 🧶 Yarn Tests
